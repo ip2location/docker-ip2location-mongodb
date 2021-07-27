@@ -14,7 +14,7 @@ This docker image supports the IP2Location (DB1 to DB25) database.
 docker run --name ip2location -d -e TOKEN={DOWNLOAD_TOKEN} -e CODE={DOWNLOAD_CODE} -e MONGODB_PASSWORD={MONGODB_PASSWORD} ip2location/mongodb
 ```
 
-    **ENV VARIABLE**
+**ENV VARIABLE**
 
     TOKEN – Download token obtained from IP2Location.
     CODE – The CSV file download code. You may get the download code from your account panel.
