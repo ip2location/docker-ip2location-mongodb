@@ -10,7 +10,9 @@ This docker image supports the IP2Location (DB1 to DB25) database.
 
 1. Run this image as daemon using the download token and product code from [IP2Location LITE](https://lite.ip2location.com) or [IP2Location](https://www.ip2location.com).
 
-       docker run --name ip2location -d -e TOKEN={DOWNLOAD_TOKEN} -e CODE={DOWNLOAD_CODE} -e MONGODB_PASSWORD={MONGODB_PASSWORD} ip2location/mongodb
+```bash
+docker run --name ip2location -d -e TOKEN={DOWNLOAD_TOKEN} -e CODE={DOWNLOAD_CODE} -e MONGODB_PASSWORD={MONGODB_PASSWORD} ip2location/mongodb
+```
 
     **ENV VARIABLE**
 
@@ -21,7 +23,9 @@ This docker image supports the IP2Location (DB1 to DB25) database.
 
 2. The installation may take seconds to minutes depending on your database sizes, downloading speed and hardware specs. You may check the installation status by viewing the container logs. Run the below command to check the container log:
 
-        docker logs -f ip2location
+```bash
+docker logs -f ip2location
+```
 
     You should see the line `=> Setup completed` if you have successfully completed the installation.
 
@@ -30,11 +34,15 @@ This docker image supports the IP2Location (DB1 to DB25) database.
 
 1. Download Debian Docker image.
 
-    sudo docker pull debian
+```bash
+sudo docker pull debian
+```
 
 2. Start the container in interactive mode.
 
-    sudo docker run --name debian-test -it debian bin/bash
+```bash
+sudo docker run --name debian-test -it debian bin/bash
+```
 
 3. Press Ctrl+P then Ctrl+Q to detach from the container. Please do not type the **exit** command as it will shut down the container, as we still need the container to be up and running for the testing.
 
@@ -43,25 +51,33 @@ This docker image supports the IP2Location (DB1 to DB25) database.
 
 1. Create the network bridge.
 
-    sudo docker network create simple-network
+```bash
+sudo docker network create simple-network
+```
 
 2. Connect both containers to the same network using the below command.
 
-    sudo docker network connect simple-network ip2location
-    sudo docker network connect simple-network debian-test
+```bash
+sudo docker network connect simple-network ip2location
+sudo docker network connect simple-network debian-test
+```
 
 
 ### Query for IP information
 
 1. Go back to the debian-test container.
 
-    sudo docker attach debian-test
+```bash
+sudo docker attach debian-test
+```
 
 2. Install MongoDB and Mongo Shell first by following the installation steps in https://docs.mongodb.com/manual/tutorial/install-mongodb-on-debian/.
 
 3. Run the Mongo Shell with the password you've specified during the installation.
 
-    mongosh --host ip2location -u mongoAdmin -p {MONGODB_PASSWORD} --authenticationDatabase admin
+```bash
+mongosh --host ip2location -u mongoAdmin -p {MONGODB_PASSWORD} --authenticationDatabase admin
+```
 
 4. To test the IPv4 database, key in the commands below to query geolocation info for IPv4 address 8.8.8.8 (IP number: 134744072).
 
@@ -88,7 +104,7 @@ When querying IPv4 address using the IPv6 database, you need to convert the IPv4
 
 To update your IP2Location database to latest version, please run the following  command:
 
-```
+```bash
 docker exec -it ip2location ./update.sh
 ```
 
