@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:buster-slim
 MAINTAINER IP2Location <support@ip2location.com>
 
 # Install packages
@@ -10,9 +10,6 @@ RUN wget -qO - https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add -
 RUN echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/5.0 main" | tee /etc/apt/sources.list.d/mongodb-org-5.0.list
 RUN apt-get update
 RUN apt-get install -y mongodb-org
-RUN echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-5.0.list
-RUN apt-get update
-RUN apt-get install -y mongodb-mongosh
 
 # Add scripts
 ADD run.sh /run.sh

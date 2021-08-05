@@ -4,7 +4,8 @@ error() { echo -e "\e[91m$1\e[m"; exit 0; }
 success() { echo -e "\e[92m$1\e[m"; }
 
 if [ -f /config ]; then
-	exit 0
+	mongod --fork --logpath /var/log/mongodb/mongod.log --auth --bind_ip_all
+	tail -f /dev/null
 fi
 
 if [ "$TOKEN" == "FALSE" ]; then
