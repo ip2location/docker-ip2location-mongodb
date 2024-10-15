@@ -1,121 +1,104 @@
 #!/bin/bash
 
-error() { echo -e "\e[91m$1\e[m"; exit 0; }
-success() { echo -e "\e[92m$1\e[m"; }
+text_primary() { echo -n " $1 $(printf '\055%.0s' {1..70})" | head -c 70; echo -n ' '; }
+text_success() { printf "\e[00;92m%s\e[00m\n" "$1"; }
+text_danger() { printf "\e[00;91m%s\e[00m\n" "$1"; exit 0; }
+
+USER_AGENT="Mozilla/5.0+(compatible; IP2Location/MongoDB-Docker; https://hub.docker.com/r/ip2location/mongodb)"
+CODES=("DB1-LITE DB3-LITE DB5-LITE DB9-LITE DB11-LITE DB1 DB2 DB3 DB4 DB5 DB6 DB7 DB8 DB9 DB10 DB11 DB12 DB13 DB14 DB15 DB16 DB17 DB18 DB19 DB20 DB21 DB22 DB23 DB24 DB25")
 
 if [ -f /config ]; then
 	mongod --fork --logpath /var/log/mongodb/mongod.log --auth --bind_ip_all
 	tail -f /dev/null
 fi
 
-if [ "$TOKEN" == "FALSE" ]; then
-	error "Missing download token."
+[ "$TOKEN" == "FALSE" ] && text_danger "Missing download token."
+
+[ "$CODE" == "FALSE" ] && text_danger "Missing database code."
+
+[ "$MONGODB_PASSWORD" == "FALSE" ] && text_danger "Missing MongoDB password."
+
+FOUND=""
+for i in "${CODES[@]}"; do
+	if [ "$i" == "$CODE" ] ; then
+		FOUND="$CODE"
+	fi
+done
+
+if [ -z $FOUND == "" ]; then
+	text_danger "Download code is invalid."
 fi
 
-if [ "$CODE" == "FALSE" ]; then
-	error "Missing product code."
-fi
+CODE=$(echo $CODE | sed 's/-//')
 
-if [ "$MONGODB_PASSWORD" == "FALSE" ]; then
-	error "Missing MongoDB password."
-fi
+rm -rf /_tmp && mkdir /_tmp && cd /_tmp
 
-if [ -z "$(echo $CODE | grep 'DB')" ]; then
-	error "Download code is invalid."
-fi
+text_primary " > Download IP2Location database"
 
-echo -n " > Create directory /_tmp "
+if [ "$IP_TYPE" == "IPV4" ]; then
+	wget -qO ipv4.zip --user-agent="$USER_AGENT" "https://www.ip2location.com/download?token=${TOKEN}&code=${CODE}CSV" > /dev/null 2>&1
 
-mkdir /_tmp
+	[ ! -z "$(grep 'NO PERMISSION' ipv4.zip)" ] && text_danger "[DENIED]"
+	[ ! -z "$(grep '5 TIMES' ipv4)" ] && text_danger "[QUOTA EXCEEDED]"
 
-[ ! -d /_tmp ] && error "[ERROR]" || success "[OK]"
+	RESULT=$(unzip -t ipv4.zip >/dev/null 2>&1)
 
-cd /_tmp
-
-echo -n " > Download IP2Location database "
-
-wget -O database.zip -q --user-agent="Docker-IP2Location/MongoDB" http://www.ip2location.com/download?token=${TOKEN}\&productcode=${CODE} > /dev/null 2>&1
-
-[ ! -f database.zip ] && error "[DOWNLOAD FAILED]"
-
-[ ! -z "$(grep 'NO PERMISSION' database.zip)" ] && error "[DENIED]"
-
-[ ! -z "$(grep '5 TIMES' database.zip)" ] && error "[QUOTA EXCEEDED]"
-
-[ $(wc -c < database.zip) -lt 512000 ] && error "[FILE CORRUPTED]"
-
-success "[OK]"
-
-echo -n " > Decompress downloaded package "
-
-unzip -q -o database.zip
-
-if [ "$CODE" == "DB1" ]; then
-	CSV="$(find . -name 'IPCountry.csv')"
-
-elif [ "$CODE" == "DB2" ]; then
-	CSV="$(find . -name 'IPISP.csv')"
-
-elif [ ! -z "$(echo $CODE | grep 'LITE')" ]; then
-	CSV="$(find . -name 'IP*.CSV')"
-
-elif [ ! -z "$(echo $CODE | grep 'IPV6')" ]; then
-	CSV="$(find . -name 'IPV6-COUNTRY*.CSV')"
-
+	[ $? -ne 0 ] && text_danger "[FILE CORRUPTED]"
 else
-	CSV="$(find . -name 'IP-COUNTRY*.CSV')"
+	wget -qO ipv6.zip --user-agent="$USER_AGENT" "https://www.ip2location.com/download?token=${TOKEN}&code=${CODE}CSVIPV6" > /dev/null 2>&1
+
+	[ ! -z "$(grep 'NO PERMISSION' ipv6.zip)" ] && text_danger "[DENIED]"
+	[ ! -z "$(grep '5 TIMES' ipv6.zip)" ] && text_danger "[QUOTA EXCEEDED]"
+
+	RESULT=$(unzip -t ipv6.zip >/dev/null 2>&1)
+
+	[ $? -ne 0 ] && text_danger "[FILE CORRUPTED]"
 fi
 
-[ -z "$CSV" ] && error "[FILE CORRUPTED]" || success "[OK]"
+text_success "[OK]"
 
-echo -n " > [MongoDB] Create data directory "
+for ZIP in $(ls | grep '.zip'); do
+	CSV=$(unzip -l $ZIP | sort -nr | grep -Eio 'IP(V6)?.*CSV' | head -n 1)
+
+	text_primary " > Decompress $CSV from $ZIP"
+
+	unzip -oq $ZIP $CSV
+
+	if [ ! -f $CSV ]; then
+		text_danger "[ERROR]"
+	fi
+
+	text_success "[OK]"
+done
+
+text_primary " > [MongoDB] Create data directory "
 mkdir -p /data/db
 
-if [ $? -ne 0 ] ; then
-	error "[ERROR]"
-fi
+[ $? -ne 0 ] && text_danger "[ERROR]" || text_success "[OK]"
 
-success "[OK]"
-
-echo -n " > [MongoDB] Start daemon "
+text_primary " > [MongoDB] Start daemon "
 mongod --fork --logpath /var/log/mongodb/mongod.log --bind_ip_all
 
-if [ $? -ne 0 ] ; then
-	error "[ERROR]"
-fi
+[ $? -ne 0 ] && text_danger "[ERROR]" || text_success "[OK]"
 
-success "[OK]"
-
-echo -n " > [MongoDB] Create admin user "
+text_primary " > [MongoDB] Create admin user "
 mongosh << EOF
 use admin
 db.createUser({user: "mongoAdmin", pwd: "$MONGODB_PASSWORD", roles:["root"]})
 exit
 EOF
 
-if [ $? -ne 0 ] ; then
-	error "[ERROR]"
-fi
+[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
 
-success "[OK]"
-
-echo -n " > [MongoDB] Shut down daemon "
+text_primary " > [MongoDB] Shut down daemon "
 mongod --shutdown
 
-if [ $? -ne 0 ] ; then
-	error "[ERROR]"
-fi
+[ $? -ne 0 ] && text_danger "[ERROR]" || text_success "[OK]"
 
-success "[OK]"
-
-echo -n " > [MongoDB] Start daemon with authentication "
+text_primary " > [MongoDB] Start daemon with authentication "
 mongod --fork --logpath /var/log/mongodb/mongod.log --auth --bind_ip_all
 
-if [ $? -ne 0 ] ; then
-	error "[ERROR]"
-fi
-
-success "[OK]"
+[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
 
 case "$CODE" in
 	DB1|DB1LITE|DB1IPV6|DB1LITEIPV6 )
@@ -220,70 +203,47 @@ case "$CODE" in
 esac
 
 if [ ! -z "$(echo $CODE | grep 'IPV6')" ]; then
-	echo -n " > [MongoDB] Create index field "
+	text_primary " > [MongoDB] Create index field "
 	cat $CSV | awk 'BEGIN { FS="\",\""; } { s = "0000000000000000000000000000000000000000"$2; print "\"A"substr(s, 1 + length(s) - 40)"\","$0; }' > ./INDEXED.CSV
-	if [ $? -ne 0 ] ; then
-		error "[ERROR]"
-	fi
-	
-	success "[OK]"
-	
-	echo -n " > [MongoDB] Create collection \"ip2location_database_tmp\" and import data "
+
+	[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
+
+	text_primary " > [MongoDB] Create collection \"ip2location_database_tmp\" and import data "
 	mongoimport -u mongoAdmin -p "$MONGODB_PASSWORD" --authenticationDatabase admin --drop --db ip2location_database --collection ip2location_database_tmp --type csv --file "./INDEXED.CSV" --fields ip_to_index,ip_from,ip_to,country_code,country_name$FIELDS
 
-	if [ $? -ne 0 ] ; then
-		error "[ERROR]"
-	fi
-	
-	success "[OK]"
-	
-	echo -n " > [MongoDB] Create index "
+	[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
+
+	text_primary " > [MongoDB] Create index "
 	mongosh -u mongoAdmin -p "$MONGODB_PASSWORD" --authenticationDatabase admin << EOF
 use ip2location_database
 db.ip2location_database_tmp.createIndex({ip_to_index: 1})
 exit
 EOF
-	
-	if [ $? -ne 0 ] ; then
-		error "[ERROR]"
-	fi
-	
-	success "[OK]"
+
+	[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
 else
-	echo -n " > [MongoDB] Create collection \"ip2location_database_tmp\" and import data "
+	text_primary " > [MongoDB] Create collection \"ip2location_database_tmp\" and import data "
 	mongoimport -u mongoAdmin -p "$MONGODB_PASSWORD" --authenticationDatabase admin --drop --db ip2location_database --collection ip2location_database_tmp --type csv --file "$CSV" --fields ip_from,ip_to,country_code,country_name$FIELDS
 
-	if [ $? -ne 0 ] ; then
-		error "[ERROR]"
-	fi
-	
-	success "[OK]"
-	
-	echo -n " > [MongoDB] Create index "
+	[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
+
+	text_primary " > [MongoDB] Create index "
 	mongosh -u mongoAdmin -p "$MONGODB_PASSWORD" --authenticationDatabase admin << EOF
 use ip2location_database
 db.ip2location_database_tmp.createIndex({ip_to: 1})
 exit
 EOF
-	if [ $? -ne 0 ] ; then
-		error "[ERROR]"
-	fi
-	
-	success "[OK]"
+	[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
 fi
 
-echo -n " > [MongoDB] Rename collection \"ip2location_database_tmp\" to \"ip2location_database\" "
+text_primary " > [MongoDB] Rename collection \"ip2location_database_tmp\" to \"ip2location_database\" "
 mongosh -u mongoAdmin -p "$MONGODB_PASSWORD" --authenticationDatabase admin << EOF
 use ip2location_database
 db.ip2location_database_tmp.renameCollection("ip2location_database", true)
 exit
 EOF
 
-if [ $? -ne 0 ] ; then
-	error "[ERROR]"
-fi
-
-success "[OK]"
+[ $? -ne 0 ] &&  text_danger "[ERROR]" || text_success "[OK]"
 
 echo " > Setup completed"
 echo ""
