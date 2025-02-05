@@ -5,7 +5,7 @@ text_success() { printf "\e[00;92m%s\e[00m\n" "$1"; }
 text_danger() { printf "\e[00;91m%s\e[00m\n" "$1"; exit 0; }
 
 USER_AGENT="Mozilla/5.0+(compatible; IP2Location/MongoDB-Docker; https://hub.docker.com/r/ip2location/mongodb)"
-CODES=("DB1-LITE DB3-LITE DB5-LITE DB9-LITE DB11-LITE DB1 DB2 DB3 DB4 DB5 DB6 DB7 DB8 DB9 DB10 DB11 DB12 DB13 DB14 DB15 DB16 DB17 DB18 DB19 DB20 DB21 DB22 DB23 DB24 DB25")
+CODES=("DB1-LITE DB3-LITE DB5-LITE DB9-LITE DB11-LITE DB1 DB2 DB3 DB4 DB5 DB6 DB7 DB8 DB9 DB10 DB11 DB12 DB13 DB14 DB15 DB16 DB17 DB18 DB19 DB20 DB21 DB22 DB23 DB24 DB25 DB26")
 
 if [ -f /config ]; then
 	mongod --fork --logpath /var/log/mongodb/mongod.log --auth --bind_ip_all
@@ -199,6 +199,10 @@ case "$CODE" in
 
 	DB25|DB25IPV6 )
 		FIELDS=',region_name,city_name,latitude,longitude,zip_code,time_zone,isp,domain,net_speed,idd_code,area_code,weather_station_code,weather_station_name,mcc,mnc,mobile_brand,elevation,usage_type,address_type,category'
+	;;
+	
+	DB266|DB26IPV6 )
+		FIELDS=',region_name,city_name,latitude,longitude,zip_code,time_zone,isp,domain,net_speed,idd_code,area_code,weather_station_code,weather_station_name,mcc,mnc,mobile_brand,elevation,usage_type,address_type,category,district,asn,as
 	;;
 esac
 

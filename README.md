@@ -3,7 +3,7 @@ docker-ip2location-mongodb
 
 This is a pre-configured, ready-to-run MongoDB server with IP2Location Geolocation database setup scripts. It simplifies the development team to install and set up the IP2Location geolocation database in MongoDB server. The setup script supports the [commercial database packages](https://www.ip2location.com) and [free LITE package](https://lite.ip2location.com). Please register for a free or commercial account before running this image, as it requires a download token during the setup process.
 
-This docker image supports the IP2Location (DB1 to DB25) database.
+This docker image supports the IP2Location (DB1 to DB26) database.
 
 
 ### Usage
@@ -18,7 +18,7 @@ docker run --name ip2location -d -e TOKEN={DOWNLOAD_TOKEN} -e CODE={DOWNLOAD_COD
 
     TOKEN – Download token obtained from IP2Location.
     CODE – The CSV file download code. You may get the download code from your account panel.
-
+    
     MONGODB_PASSWORD - Password for MongoDB admin.
 
 2. The installation may take seconds to minutes depending on your database sizes, downloading speed and hardware specs. You may check the installation status by viewing the container logs. Run the below command to check the container log:

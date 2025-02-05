@@ -152,6 +152,10 @@ case "$CODE" in
 	DB25|DB25IPV6 )
 		FIELDS=',region_name,city_name,latitude,longitude,zip_code,time_zone,isp,domain,net_speed,idd_code,area_code,weather_station_code,weather_station_name,mcc,mnc,mobile_brand,elevation,usage_type,address_type,category'
 	;;
+	
+	DB26|DB26IPV6 )
+		FIELDS=',region_name,city_name,latitude,longitude,zip_code,time_zone,isp,domain,net_speed,idd_code,area_code,weather_station_code,weather_station_name,mcc,mnc,mobile_brand,elevation,usage_type,address_type,category,district,asn,as'
+	;;
 esac
 
 if [ ! -z "$(echo $CODE | grep 'IPV6')" ]; then
