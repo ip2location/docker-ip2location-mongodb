@@ -154,7 +154,7 @@ case "$CODE" in
 	;;
 	
 	DB26|DB26IPV6 )
-		FIELDS=',region_name,city_name,latitude,longitude,zip_code,time_zone,isp,domain,net_speed,idd_code,area_code,weather_station_code,weather_station_name,mcc,mnc,mobile_brand,elevation,usage_type,address_type,category,district,asn,as'
+		FIELDS=',region_name,city_name,latitude,longitude,zip_code,time_zone,isp,domain,net_speed,idd_code,area_code,weather_station_code,weather_station_name,mcc,mnc,mobile_brand,elevation,usage_type,address_type,category,district,asn,as,as_domain,as_usage_type,as_cidr'
 	;;
 esac
 
